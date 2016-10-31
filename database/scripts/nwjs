@@ -1,2 +1,52 @@
-#!/bin/bash
+#!/usr/bin/python3
 
+from imp import load_source
+import sys
+import os
+import zipfile
+import tempfile
+
+def update_zip(zipname, filename, data):
+    zin = zipfile.ZipFile(filename, 'r')
+    infolist = zin.infolist()
+    filenames = [i.filename for i in infolist]
+    if not zipname in filenames:
+        zin.close()
+        return False
+
+    # generate a temp file
+    tmpfd, tmpname = tempfile.mkstemp()
+    os.close(tmpfd)
+
+    # create a temp copy of the archive without filename
+    with zipfile.ZipFile(tmpname+'.nw', 'w', compression=0) as zout:
+        zout.comment = zin.comment # preserve the comment
+        for i, item in enumerate(infolist):
+            if filenames[i] != zipname:
+                zout.writestr(item, zin.read(filenames[i]))
+            else:
+                zout.writestr(zipname, data)
+    zin.close()
+    # replace with the temp archive
+    os.remove(filename)
+    os.rename(tmpname, filename)
+        
+
+absolute_path = os.path.split(os.path.abspath(__file__))[0] + "/"
+svgtopng = load_source('svgtopng', absolute_path + 'svgtopng.py')
+
+
+filename = sys.argv[3]+sys.argv[4]
+icon_to_repl = sys.argv[2]
+icon_for_repl = sys.argv[1]
+
+
+filename_svg, file_extension = os.path.splitext(icon_for_repl)
+if file_extension == '.svg':
+    pngbytes = svgtopng.convert_svg2bin(icon_for_repl)
+else:
+    with open(icon_for_repl, 'rb') as pngfile:
+        pngbytes = pngfile.read()
+
+
+update_zip(icon_to_repl, filename, pngbytes)
