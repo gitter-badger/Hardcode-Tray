@@ -21,7 +21,9 @@ else
 fi
 
 if [ $5 -eq -1 ] || [ $5 -eq 2 ]; then
-    zip -r "/tmp/$4.nw" "/tmp/$4/"
+    cd "/tmp/$4/" 
+    zip -r "/tmp/$4.nw" *
+    cd ..
     rm -rf "/tmp/$4/"
     chmod +x "/tmp/$4.nw"
     mv "/tmp/$4.nw" "$3""$4"
